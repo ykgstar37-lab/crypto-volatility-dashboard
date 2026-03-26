@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  text-align: left;
+}
+
+/* Dark mode overrides when parent has .dark-mode class */
+.dark-mode .card {
+  background: #1a1d2e !important;
+  border-color: #2a2d3e !important;
+  color: #e5e7eb !important;
+}
+.dark-mode .card h3,
+.dark-mode .card .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+.dark-mode .card .text-gray-400,
+.dark-mode .card .text-gray-500,
+.dark-mode .card .text-gray-600 {
+  color: #9ca3af !important;
+}
+.dark-mode .card .bg-gray-50,
+.dark-mode .card .bg-gray-100 {
+  background: #252838 !important;
+}
+.dark-mode .card .border-gray-100,
+.dark-mode .card .border-gray-50 {
+  border-color: #2a2d3e !important;
+}
