@@ -7,7 +7,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.price import BtcDaily
+from app.models.price import CoinDaily
 from app.services.garch import fit_garch, fit_tgarch, fit_har_garch
 
 router = APIRouter(prefix="/api/signal", tags=["signal"])
@@ -16,7 +16,13 @@ router = APIRouter(prefix="/api/signal", tags=["signal"])
 @router.get("")
 def get_signal(db: Session = Depends(get_db)):
     """Generate trading signal based on FNG + volatility trend."""
-    rows = db.query(BtcDaily).order_by(desc(BtcDaily.date)).limit(90).all()
+    rows = (
+        db.query(CoinDaily)
+        .filter(CoinDaily.symbol == "BTC")
+        .order_by(desc(CoinDaily.date))
+        .limit(90)
+        .all()
+    )
     rows.reverse()
     if len(rows) < 60:
         return {"signal": "neutral", "confidence": 0, "reasons": []}
@@ -59,7 +65,7 @@ def get_signal(db: Session = Depends(get_db)):
         reasons.append({"type": "neutral", "text": f"Volatility stable ({vol_trend:+.1f}%)"})
 
     # Price momentum (7d)
-    price_7d_change = ((rows[-1].close / rows[-8].close) - 1) * 100 if rows[-8].close else 0
+    price_7d_change = ((rows[-1].close / rows[-8].close) - 1) * 100 if len(rows) >= 8 and rows[-8].close else 0
     if price_7d_change > 5:
         score += 10
         reasons.append({"type": "bullish", "text": f"7d price momentum: {price_7d_change:+.1f}%"})
@@ -94,7 +100,13 @@ def get_signal(db: Session = Depends(get_db)):
 @router.get("/leaderboard")
 def model_leaderboard(db: Session = Depends(get_db)):
     """Rank models by prediction accuracy over last 30 days."""
-    rows = db.query(BtcDaily).order_by(desc(BtcDaily.date)).limit(90).all()
+    rows = (
+        db.query(CoinDaily)
+        .filter(CoinDaily.symbol == "BTC")
+        .order_by(desc(CoinDaily.date))
+        .limit(90)
+        .all()
+    )
     rows.reverse()
     if len(rows) < 70:
         return []
@@ -139,7 +151,13 @@ def model_leaderboard(db: Session = Depends(get_db)):
 @router.get("/accuracy")
 def signal_accuracy(db: Session = Depends(get_db)):
     """Calculate historical signal accuracy over last 60 days."""
-    rows = db.query(BtcDaily).order_by(desc(BtcDaily.date)).limit(90).all()
+    rows = (
+        db.query(CoinDaily)
+        .filter(CoinDaily.symbol == "BTC")
+        .order_by(desc(CoinDaily.date))
+        .limit(90)
+        .all()
+    )
     rows.reverse()
     if len(rows) < 30:
         return {"total": 0, "correct": 0, "accuracy": 0, "history": []}

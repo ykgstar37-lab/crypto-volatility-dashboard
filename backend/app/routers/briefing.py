@@ -8,14 +8,20 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models.price import BtcDaily
+from app.models.price import CoinDaily
 
 router = APIRouter(prefix="/api/briefing", tags=["briefing"])
 
 
 def _build_market_context(db: Session) -> dict:
     """Gather current market data for the AI prompt."""
-    rows = db.query(BtcDaily).order_by(desc(BtcDaily.date)).limit(30).all()
+    rows = (
+        db.query(CoinDaily)
+        .filter(CoinDaily.symbol == "BTC")
+        .order_by(desc(CoinDaily.date))
+        .limit(30)
+        .all()
+    )
     rows.reverse()
     if len(rows) < 7:
         return {}

@@ -8,7 +8,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.price import BtcDaily
+from app.models.price import CoinDaily
 from app.schemas.volatility import BacktestMetric, BacktestResult
 from app.services.garch import fit_garch, fit_tgarch, fit_har_garch
 
@@ -46,9 +46,9 @@ def backtest(
     db: Session = Depends(get_db),
 ):
     rows = (
-        db.query(BtcDaily)
-        .filter(BtcDaily.date >= start, BtcDaily.date <= end)
-        .order_by(BtcDaily.date)
+        db.query(CoinDaily)
+        .filter(CoinDaily.symbol == "BTC", CoinDaily.date >= start, CoinDaily.date <= end)
+        .order_by(CoinDaily.date)
         .all()
     )
 

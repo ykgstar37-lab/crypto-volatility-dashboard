@@ -42,7 +42,7 @@ def _load_series(db: Session, days: int = 400, symbol: str = "BTC"):
 
 @router.get("/predict", response_model=VolatilityPredict)
 def volatility_predict(
-    coin: str = Query(default="BTC", regex="^(BTC|ETH|SOL)$"),
+    coin: str = Query(default="BTC", pattern="^(BTC|ETH|SOL)$"),
     db: Session = Depends(get_db),
 ):
     returns, volume, fng = _load_series(db, symbol=coin)
@@ -62,7 +62,7 @@ def volatility_predict(
 @router.get("/compare")
 def volatility_compare(
     days: int = Query(default=90, le=180),
-    coin: str = Query(default="BTC", regex="^(BTC|ETH|SOL)$"),
+    coin: str = Query(default="BTC", pattern="^(BTC|ETH|SOL)$"),
     db: Session = Depends(get_db),
 ):
     """Return daily rolling volatility predictions for all 5 models."""
@@ -123,7 +123,7 @@ def volatility_compare(
 @router.get("/accuracy")
 def volatility_accuracy(
     days: int = Query(default=60, le=120),
-    coin: str = Query(default="BTC", regex="^(BTC|ETH|SOL)$"),
+    coin: str = Query(default="BTC", pattern="^(BTC|ETH|SOL)$"),
     db: Session = Depends(get_db),
 ):
     """Track cumulative prediction accuracy: predicted vs realized volatility per model."""
