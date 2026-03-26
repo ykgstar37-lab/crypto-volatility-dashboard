@@ -14,6 +14,7 @@ import Leaderboard from '../components/Leaderboard';
 import BacktestPanel from '../components/BacktestPanel';
 import ModelExplainer from '../components/ModelExplainer';
 import AiMascot from '../components/AiMascot';
+import AccuracyTracker from '../components/AccuracyTracker';
 import BottomDock from '../components/BottomDock';
 import PriceAlert from '../components/PriceAlert';
 import SignalAccuracy from '../components/SignalAccuracy';
@@ -300,6 +301,11 @@ export default function Dashboard() {
                     {/* Row 3: Volatility (full width) */}
                     <div id="models" className="mb-6">
                         <VolatilityChart t={t} />
+                    </div>
+
+                    {/* Row 3.5: Accuracy Tracker */}
+                    <div className="mb-6">
+                        <AccuracyTracker coin={coin} t={t} />
                     </div>
 
                     {/* Row 4: FNG History + Log Returns */}

@@ -118,3 +118,80 @@ def volatility_compare(
         results.append(row_data)
 
     return results
+
+
+@router.get("/accuracy")
+def volatility_accuracy(
+    days: int = Query(default=60, le=120),
+    coin: str = Query(default="BTC", regex="^(BTC|ETH|SOL)$"),
+    db: Session = Depends(get_db),
+):
+    """Track cumulative prediction accuracy: predicted vs realized volatility per model."""
+    total_needed = days + WINDOW + 30
+    rows = (
+        db.query(CoinDaily)
+        .filter(CoinDaily.symbol == coin)
+        .order_by(desc(CoinDaily.date))
+        .limit(total_needed)
+        .all()
+    )
+    rows.reverse()
+    if len(rows) < WINDOW + 31:
+        return {"models": [], "daily": []}
+
+    returns = np.array([r.log_return or 0 for r in rows])
+    dates = [r.date for r in rows]
+    returns_series = pd.Series(returns, index=dates)
+
+    model_fns = [
+        ("GARCH(1,1)", lambda w: fit_garch(w)),
+        ("TGARCH", lambda w: fit_tgarch(w)),
+        ("HAR-GARCH", lambda w: fit_har_garch(w)),
+    ]
+
+    # Collect daily predictions vs realized
+    daily = []
+    cumulative_errors = {name: [] for name, _ in model_fns}
+
+    for i in range(WINDOW + 30, len(rows)):
+        window_returns = returns[i - WINDOW:i]
+        realized = abs(returns[i]) * math.sqrt(365) * 100
+
+        day_data = {"date": dates[i].isoformat(), "realized": round(realized, 2)}
+
+        for name, fn in model_fns:
+            try:
+                pred = fn(window_returns) * math.sqrt(365) * 100
+                error = abs(pred - realized)
+                cumulative_errors[name].append(error)
+                day_data[name] = round(pred, 2)
+                day_data[f"{name}_error"] = round(error, 2)
+                # Cumulative RMSE up to this point
+                day_data[f"{name}_cum_rmse"] = round(
+                    math.sqrt(np.mean([e**2 for e in cumulative_errors[name]])), 4
+                )
+            except Exception:
+                day_data[name] = None
+
+        daily.append(day_data)
+
+    # Summary per model
+    models_summary = []
+    for name, _ in model_fns:
+        errors = cumulative_errors[name]
+        if errors:
+            mae = float(np.mean(errors))
+            rmse = math.sqrt(float(np.mean([e**2 for e in errors])))
+            # Direction accuracy: was the prediction's relative magnitude correct?
+            models_summary.append({
+                "model": name,
+                "mae": round(mae, 4),
+                "rmse": round(rmse, 4),
+                "samples": len(errors),
+            })
+
+    models_summary.sort(key=lambda x: x["rmse"])
+    for i, m in enumerate(models_summary):
+        m["rank"] = i + 1
+
+    return {"models": models_summary, "daily": daily}

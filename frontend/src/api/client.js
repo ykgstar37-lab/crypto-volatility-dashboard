@@ -9,6 +9,7 @@ export const fetchMultiPrices = () => client.get('/api/price/multi').then(r => r
 export const fetchPriceHistory = (days = 365, coin = 'BTC') => client.get(`/api/price/history?days=${days}&coin=${coin}`).then(r => r.data);
 export const fetchVolatilityPredict = (coin = 'BTC') => client.get(`/api/volatility/predict?coin=${coin}`).then(r => r.data);
 export const fetchVolatilityCompare = (days = 90, coin = 'BTC') => client.get(`/api/volatility/compare?days=${days}&coin=${coin}`).then(r => r.data);
+export const fetchVolatilityAccuracy = (days = 60, coin = 'BTC') => client.get(`/api/volatility/accuracy?days=${days}&coin=${coin}`).then(r => r.data);
 export const fetchBacktest = (start, end) => client.get(`/api/backtest?start=${start}&end=${end}`).then(r => r.data);
 export const fetchSignal = () => client.get('/api/signal').then(r => r.data);
 export const fetchLeaderboard = () => client.get('/api/signal/leaderboard').then(r => r.data);
