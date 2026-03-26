@@ -8,3 +8,4 @@ arch
 numpy
 pandas
 scipy
+websockets

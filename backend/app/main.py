@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import price, volatility, backtest, signal, briefing
+from app.routers.ws import router as ws_router, binance_listener
 from app.scheduler import backfill_data, daily_fetch, init_db
 
 logging.basicConfig(level=logging.INFO)
@@ -36,7 +37,14 @@ async def lifespan(app: FastAPI):
     scheduler.start()
     logger.info("Scheduler started")
 
+    # Start Binance WebSocket relay
+    binance_task = asyncio.create_task(binance_listener())
+    logger.info("Binance WebSocket relay started")
+
     yield
+
+    # Shutdown Binance listener
+    binance_task.cancel()
 
     # Shutdown
     scheduler.shutdown()
@@ -62,6 +70,7 @@ app.include_router(volatility.router)
 app.include_router(backtest.router)
 app.include_router(signal.router)
 app.include_router(briefing.router)
+app.include_router(ws_router)
 
 
 @app.get("/api/health")

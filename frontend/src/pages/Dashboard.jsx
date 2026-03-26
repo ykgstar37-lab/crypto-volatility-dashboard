@@ -22,6 +22,7 @@ import ToastContainer from '../components/Toast';
 import { SkeletonCard, SkeletonChart, SkeletonWide } from '../components/Skeleton';
 import { translations } from '../i18n';
 import { fetchCurrentPrice, fetchPriceHistory, fetchVolatilityPredict, fetchEthPrice } from '../api/client';
+import useRealtimePrice from '../hooks/useRealtimePrice';
 
 function addLog(setLogs, type, message, data) {
     const time = new Date().toLocaleTimeString('en-GB');
@@ -48,6 +49,15 @@ export default function Dashboard() {
         setToasts(prev => [...prev, { id, ...toast }]);
     };
     const dismissToast = (id) => setToasts(prev => prev.filter(t => t.id !== id));
+
+    // WebSocket real-time ticks
+    const wsLogRef = (type, msg, data) => addLog(setLogs, type, msg, data);
+    const { btc: wsBtc, eth: wsEth, connected: wsConnected } = useRealtimePrice(wsLogRef);
+
+    // Merge WS tick into price state for BTC
+    const liveBtcPrice = wsBtc?.price ?? price?.price;
+    // Merge WS tick into ETH
+    const liveEthPrice = wsEth ? { usd: wsEth.price, usd_24h_change: ethPrice?.usd_24h_change } : ethPrice;
 
     const load = async (days = 365) => {
         try {
@@ -82,20 +92,24 @@ export default function Dashboard() {
 
     useEffect(() => { load(); }, []);
 
-    // Auto-refresh price every 60s
+    // Auto-refresh full data (FNG, volume, etc.) — WS only gives price ticks
+    // If WS connected: every 5min. If not: every 60s as fallback.
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
-                addLog(setLogs, 'info', 'Auto-refresh: /api/price/current...');
+                const label = wsConnected ? 'Scheduled refresh' : 'Auto-refresh (polling)';
+                addLog(setLogs, 'info', `${label}: /api/price/current...`);
                 const priceData = await fetchCurrentPrice();
                 setPrice(priceData);
-                addLog(setLogs, 'success', `Auto-refresh: $${priceData.price.toLocaleString()}`, `FNG: ${priceData.fng}`);
+                addLog(setLogs, 'success', `${label}: $${priceData.price.toLocaleString()}`, `FNG: ${priceData.fng}`);
+                // Also refresh ETH via CoinGecko (24h change etc.)
+                fetchEthPrice().then(setEthPrice).catch(() => {});
             } catch (e) {
-                addLog(setLogs, 'error', `Auto-refresh failed: ${e.message}`);
+                addLog(setLogs, 'error', `Refresh failed: ${e.message}`);
             }
-        }, 60000);
+        }, wsConnected ? 300000 : 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [wsConnected]);
 
     // Scroll spy
     useEffect(() => {
@@ -184,9 +198,9 @@ export default function Dashboard() {
                             className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${dark ? 'bg-gray-700 text-yellow-300' : 'bg-gray-100 text-gray-500'}`}>
                             {dark ? '☀️' : '🌙'}
                         </button>
-                        <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                            {t.live}
+                        <span className={`flex items-center gap-1.5 text-xs font-medium ${wsConnected ? 'text-green-600' : 'text-amber-500'}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${wsConnected ? 'bg-green-500 animate-pulse' : 'bg-amber-400'}`}></span>
+                            {wsConnected ? (lang === 'ko' ? '실시간' : 'Live') : (lang === 'ko' ? 'Polling' : 'Polling')}
                         </span>
                         <a href="https://github.com/ykgstar37-lab/crypto-volatility-dashboard" target="_blank" rel="noopener noreferrer"
                             className="text-xs font-medium text-gray-400 hover:text-gray-600 transition">GitHub</a>
@@ -207,9 +221,9 @@ export default function Dashboard() {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <StatCard
                             label={t.btcPrice}
-                            value={price ? `$${price.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '—'}
+                            value={liveBtcPrice ? `$${liveBtcPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '—'}
                             change={price?.change_24h}
-                            sub="24h"
+                            sub={wsConnected ? 'LIVE' : '24h'}
                             icon="₿"
                         />
                         <StatCard
@@ -249,12 +263,12 @@ export default function Dashboard() {
                         <SignalAccuracy t={t} />
                         <StatCard
                             label="Ethereum"
-                            value={ethPrice ? `$${ethPrice.usd?.toLocaleString()}` : '—'}
-                            change={ethPrice?.usd_24h_change}
-                            sub="ETH"
+                            value={liveEthPrice ? `$${liveEthPrice.usd?.toLocaleString()}` : '—'}
+                            change={liveEthPrice?.usd_24h_change}
+                            sub={wsConnected ? 'LIVE' : 'ETH'}
                             icon="Ξ"
                         />
-                        <PriceAlert currentPrice={price?.price} t={t} addToast={addToast} />
+                        <PriceAlert currentPrice={liveBtcPrice} t={t} addToast={addToast} />
                         <ReportDownload price={price} volatility={volatility} t={t} />
                     </div>
 
@@ -296,7 +310,7 @@ export default function Dashboard() {
             </main>
 
             {/* Bottom Dock - floating tools bar */}
-            <BottomDock dark={dark} ethPrice={ethPrice} price={price} volatility={volatility} t={t} addToast={addToast} />
+            <BottomDock dark={dark} ethPrice={liveEthPrice} price={{ ...price, price: liveBtcPrice }} volatility={volatility} t={t} addToast={addToast} />
 
             {/* Toast notifications */}
             <ToastContainer toasts={toasts} onDismiss={dismissToast} />
