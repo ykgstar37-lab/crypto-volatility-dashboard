@@ -102,7 +102,7 @@
 
 ---
 
-## v0.5.0 — 포트폴리오 시뮬레이터 (작업 중, 미커밋)
+## v0.5.0 — 포트폴리오 시뮬레이터 (784317f)
 
 **Monte Carlo 시뮬레이션 기반 멀티코인 포트폴리오 리스크 분석**
 
@@ -121,6 +121,18 @@
   - VaR, Sharpe Ratio, 코인별 상세 결과 표시
 - Sidebar에 Portfolio 메뉴 추가
 - Dashboard에 PortfolioSimulator 섹션 통합
+
+---
+
+## v0.5.1 — 심볼 필터 버그 수정 (b251ce8)
+
+**멀티코인 전환 시 데이터 혼재 버그 수정**
+
+### Backend
+- `routers/signal.py`: 시그널/리더보드/적중률 쿼리에 `symbol` 필터 추가
+- `routers/briefing.py`: AI 브리핑 쿼리에 코인별 필터 적용
+- `routers/backtest.py`: 백테스트 쿼리에 `symbol` 조건 추가
+- 코인 전환 시 이전 코인 데이터가 섞이는 문제 해결
 
 ---
 

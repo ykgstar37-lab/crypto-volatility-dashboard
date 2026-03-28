@@ -143,6 +143,7 @@ export default function AccuracyTracker({ coin = 'BTC', t = {} }) {
                                 strokeWidth={2}
                                 dot={false}
                                 connectNulls
+                                isAnimationActive={false}
                             />
                         ))}
                     </LineChart>

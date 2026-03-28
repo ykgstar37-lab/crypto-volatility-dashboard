@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function Sidebar({ activeSection, dark }) {
+export default function Sidebar({ activeSection, onNavigate, dark }) {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const menus = [
@@ -48,6 +48,7 @@ export default function Sidebar({ activeSection, dark }) {
     ];
 
     const scrollTo = (id) => {
+        onNavigate?.(id);
         document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         setMobileOpen(false);
     };

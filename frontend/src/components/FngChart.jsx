@@ -55,7 +55,7 @@ export default function FngChart({ data, t = {} }) {
                         </ReferenceLine>
                     ))}
                     <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }} formatter={v => [v, 'FNG']} />
-                    <Area type="monotone" dataKey="fng" stroke="#eab308" strokeWidth={1.5} fill="url(#fngGrad)" dot={false} />
+                    <Area type="monotone" dataKey="fng" stroke="#eab308" strokeWidth={1.5} fill="url(#fngGrad)" dot={false} isAnimationActive={false} />
                 </AreaChart>
             </ResponsiveContainer>
             <div className="flex justify-between mt-2 text-[9px] font-semibold text-gray-400 px-2">

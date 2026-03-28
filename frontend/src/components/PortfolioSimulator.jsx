@@ -185,7 +185,7 @@ export default function PortfolioSimulator({ t = {} }) {
                                         labelFormatter={v => `P&L: $${v >= 0 ? '+' : ''}${v}`}
                                     />
                                     <ReferenceLine x={0} stroke="#ef4444" strokeDasharray="3 3" />
-                                    <Bar dataKey="count" radius={[2, 2, 0, 0]}>
+                                    <Bar dataKey="count" radius={[2, 2, 0, 0]} isAnimationActive={false}>
                                         {result.distribution.map((d, i) => (
                                             <Cell key={i} fill={d.x >= 0 ? '#2b4fcb' : '#ef4444'} opacity={0.7} />
                                         ))}

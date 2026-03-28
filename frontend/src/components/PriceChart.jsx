@@ -44,9 +44,9 @@ export default function PriceChart({ data, onPeriodChange, t = {} }) {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
-                    <YAxis tickFormatter={formatPrice} tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={50} />
+                    <YAxis tickFormatter={formatPrice} tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={50} domain={['dataMin', 'dataMax']} />
                     <Tooltip formatter={(v) => [`$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })}`, 'Price']} contentStyle={{ borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }} />
-                    <Area type="monotone" dataKey="close" stroke="#2b4fcb" strokeWidth={2} fill="url(#priceGrad)" dot={false} />
+                    <Area type="monotone" dataKey="close" stroke="#2b4fcb" strokeWidth={2} fill="url(#priceGrad)" dot={false} isAnimationActive={false} />
                 </AreaChart>
             </ResponsiveContainer>
         </div>

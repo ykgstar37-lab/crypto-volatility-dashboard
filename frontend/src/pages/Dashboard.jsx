@@ -127,7 +127,7 @@ export default function Dashboard() {
     // Scroll spy
     useEffect(() => {
         const handleScroll = () => {
-            const sections = ['dashboard', 'models', 'fng', 'returns', 'log'];
+            const sections = ['dashboard', 'signal', 'models', 'fng', 'returns', 'portfolio', 'backtest', 'log'];
             for (const id of sections) {
                 const el = document.getElementById(id);
                 if (el && el.getBoundingClientRect().top < 200) {
@@ -182,7 +182,7 @@ export default function Dashboard() {
     return (
         <div className={`min-h-screen transition-colors duration-300 ${dark ? 'bg-[#0f1117] text-gray-100 dark-mode' : 'bg-[#f8f9fb] text-gray-900'}`} style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
             {/* Sidebar */}
-            <Sidebar activeSection={activeSection} dark={dark} />
+            <Sidebar activeSection={activeSection} onNavigate={setActiveSection} dark={dark} />
 
             {/* Header */}
             <header className={`border-b sticky top-0 z-30 lg:pl-56 transition-colors ${dark ? 'bg-[#161822] border-gray-800' : 'bg-white border-gray-100'}`}>
@@ -329,12 +329,12 @@ export default function Dashboard() {
                     </div>
 
                     {/* Row 6: Backtest */}
-                    <div className="mb-6">
+                    <div id="backtest" className="mb-6">
                         <BacktestPanel t={t} />
                     </div>
 
                     {/* Row 7: API Log */}
-                    <div className="mb-6">
+                    <div id="log" className="mb-6">
                         <ApiLog logs={logs} t={t} />
                     </div>
 

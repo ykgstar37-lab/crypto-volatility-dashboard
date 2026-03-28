@@ -91,6 +91,7 @@ export default function VolatilityChart({ t = {} }) {
                                     strokeDasharray={m.dash}
                                     dot={false}
                                     connectNulls
+                                    isAnimationActive={false}
                                 />
                             )
                         ))}

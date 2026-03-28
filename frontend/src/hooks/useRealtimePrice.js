@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const WS_BASE = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:8000`;
+const WS_BASE = import.meta.env.VITE_WS_URL || `ws://${window.location.host}`;
 
 /**
  * useRealtimePrice — WebSocket hook for Binance real-time ticks via backend relay.

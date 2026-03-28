@@ -18,7 +18,7 @@ export default function LogReturnsChart({ data, t = {} }) {
                     <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval={9} />
                     <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={v => `${v}%`} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 12 }} formatter={v => [`${v}%`, 'Return']} />
-                    <Bar dataKey="ret" radius={[2, 2, 0, 0]} barSize={6}>
+                    <Bar dataKey="ret" radius={[2, 2, 0, 0]} barSize={6} isAnimationActive={false}>
                         {sliced.map((entry, idx) => (
                             <Cell key={idx} fill={entry.ret >= 0 ? '#2b4fcb' : '#ef4444'} opacity={0.8} />
                         ))}
