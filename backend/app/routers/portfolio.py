@@ -5,7 +5,7 @@ import math
 
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.price import CoinDaily
 from app.services.garch import fit_garch
+from app.services.rate_limit import portfolio_limiter, get_client_ip
 
 router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
 
@@ -42,7 +43,9 @@ def _load_returns(db: Session, symbol: str, days: int = 365) -> pd.Series | None
 
 
 @router.post("/simulate")
-def simulate_portfolio(req: PortfolioRequest, db: Session = Depends(get_db)):
+def simulate_portfolio(request: Request, req: PortfolioRequest, db: Session = Depends(get_db)):
+    portfolio_limiter.check(get_client_ip(request))
+
     weights = {k: v for k, v in req.weights.items() if k in SUPPORTED and v > 0}
     if not weights:
         return {"error": "No valid weights"}
@@ -107,8 +110,8 @@ def simulate_portfolio(req: PortfolioRequest, db: Session = Depends(get_db)):
     var_95_usd = req.investment * garch_vol * z_95 * horizon_factor
     var_99_usd = req.investment * garch_vol * z_99 * horizon_factor
 
-    # Monte Carlo simulation (1000 paths)
-    n_sims = 1000
+    # Monte Carlo simulation (10,000 paths for reliable 99% VaR tail estimation)
+    n_sims = 10_000
     mc_returns = np.random.normal(port_mean * req.horizon, garch_vol * horizon_factor, n_sims)
     mc_values = req.investment * np.exp(mc_returns)
     mc_pnl = mc_values - req.investment
@@ -122,7 +125,7 @@ def simulate_portfolio(req: PortfolioRequest, db: Session = Depends(get_db)):
     }
 
     # Distribution histogram
-    hist_counts, hist_edges = np.histogram(mc_pnl, bins=40)
+    hist_counts, hist_edges = np.histogram(mc_pnl, bins=50)
     distribution = [
         {"x": round(float((hist_edges[i] + hist_edges[i + 1]) / 2), 2), "count": int(hist_counts[i])}
         for i in range(len(hist_counts))

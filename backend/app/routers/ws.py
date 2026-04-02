@@ -48,10 +48,14 @@ async def broadcast(message: dict):
 async def binance_listener():
     """Connect to Binance combined stream and relay ticks."""
     url = f"{BINANCE_WS}/{'/'.join(STREAMS)}"
+    backoff = 1  # initial retry delay in seconds
+    max_backoff = 60
+
     while True:
         try:
             async with websockets.connect(url) as ws:
                 logger.info(f"Connected to Binance WebSocket: {STREAMS}")
+                backoff = 1  # reset on successful connection
                 async for raw in ws:
                     try:
                         data = json.loads(raw)
@@ -78,8 +82,9 @@ async def binance_listener():
                     except (json.JSONDecodeError, KeyError, ValueError):
                         continue
         except Exception as e:
-            logger.warning(f"Binance WS disconnected: {e}. Reconnecting in 3s...")
-            await asyncio.sleep(3)
+            logger.warning(f"Binance WS disconnected: {e}. Reconnecting in {backoff}s...")
+            await asyncio.sleep(backoff)
+            backoff = min(backoff * 2, max_backoff)
 
 
 @router.websocket("/ws/ticks")

@@ -23,6 +23,8 @@ class ModelPrediction(BaseModel):
     model: str
     sigma: float
     annualized_vol: float
+    status: str = "ok"
+    error: str | None = None
 
 
 class VolatilityPredict(BaseModel):

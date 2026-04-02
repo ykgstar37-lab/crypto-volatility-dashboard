@@ -94,8 +94,8 @@ def fit_har_tgarch_x(returns: pd.Series, volume: pd.Series, fng: pd.Series) -> f
 
     aligned = pd.DataFrame({
         "rv_d": har["rv_d"],
-        "vol_lag": volume.reindex(har.index).fillna(method="ffill").shift(1),
-        "fng_lag": fng.reindex(har.index).fillna(method="ffill").shift(1),
+        "vol_lag": volume.reindex(har.index).ffill().shift(1),
+        "fng_lag": fng.reindex(har.index).ffill().shift(1),
     }).dropna()
 
     if len(aligned) < 60:
@@ -104,9 +104,13 @@ def fit_har_tgarch_x(returns: pd.Series, volume: pd.Series, fng: pd.Series) -> f
     r = (aligned["rv_d"] * 100).values
     exog = aligned[["vol_lag", "fng_lag"]].values
 
-    model = arch_model(r, vol="Garch", p=1, o=1, q=1, dist="t", rescale=False)
+    # Pass exogenous variables to the mean equation via x=
+    model = arch_model(r, x=exog, vol="Garch", p=1, o=1, q=1, dist="t", rescale=False)
     res = model.fit(disp="off", show_warning=False)
-    forecast = res.forecast(horizon=1)
+
+    # For forecasting, provide last known exog values (shape: horizon x n_exog)
+    last_exog = exog[-1:].reshape(1, -1)
+    forecast = res.forecast(horizon=1, x=last_exog)
     sigma2 = forecast.variance.values[-1, 0]
     return math.sqrt(sigma2) / 100
 
@@ -127,9 +131,9 @@ def predict_all(returns: pd.Series, volume: pd.Series | None = None, fng: pd.Ser
         try:
             sigma = fn()
             ann = sigma * math.sqrt(365)
-            results.append({"model": name, "sigma": round(sigma, 6), "annualized_vol": round(ann, 4)})
-        except Exception:
-            results.append({"model": name, "sigma": 0.0, "annualized_vol": 0.0})
+            results.append({"model": name, "sigma": round(sigma, 6), "annualized_vol": round(ann, 4), "status": "ok"})
+        except Exception as e:
+            results.append({"model": name, "sigma": 0.0, "annualized_vol": 0.0, "status": "error", "error": str(e)})
 
     # HAR-TGARCH-X needs volume and FNG
     try:
@@ -138,9 +142,10 @@ def predict_all(returns: pd.Series, volume: pd.Series | None = None, fng: pd.Ser
         else:
             sigma = 0.0
         ann = sigma * math.sqrt(365)
-        results.append({"model": "HAR-TGARCH-X", "sigma": round(sigma, 6), "annualized_vol": round(ann, 4)})
-    except Exception:
-        results.append({"model": "HAR-TGARCH-X", "sigma": 0.0, "annualized_vol": 0.0})
+        status = "ok" if sigma > 0 else "no_data"
+        results.append({"model": "HAR-TGARCH-X", "sigma": round(sigma, 6), "annualized_vol": round(ann, 4), "status": status})
+    except Exception as e:
+        results.append({"model": "HAR-TGARCH-X", "sigma": 0.0, "annualized_vol": 0.0, "status": "error", "error": str(e)})
 
     # Cache results
     for r in results:

@@ -167,7 +167,7 @@ export default function PortfolioSimulator({ t = {} }) {
                     {/* Monte Carlo Distribution */}
                     <div className="mb-6">
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">
-                            Monte Carlo {lang === 'ko' ? '손익 분포' : 'P&L Distribution'} (1,000 {lang === 'ko' ? '시나리오' : 'scenarios'})
+                            Monte Carlo {lang === 'ko' ? '손익 분포' : 'P&L Distribution'} (10,000 {lang === 'ko' ? '시나리오' : 'scenarios'})
                         </p>
                         <div className="h-48">
                             <ResponsiveContainer width="100%" height="100%">
@@ -201,7 +201,7 @@ export default function PortfolioSimulator({ t = {} }) {
                     </div>
 
                     {/* Coin breakdown */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {result.coins.map(c => {
                             const coinMeta = COINS.find(m => m.id === c.symbol);
                             return (

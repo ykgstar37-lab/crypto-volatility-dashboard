@@ -127,5 +127,20 @@ async def daily_fetch():
 
 
 def init_db():
-    """Create tables if not exist."""
-    Base.metadata.create_all(bind=engine)
+    """Run Alembic migrations to ensure schema is up to date."""
+    import os
+
+    # Skip Alembic in test environments — tests manage their own schema
+    if os.environ.get("TESTING"):
+        Base.metadata.create_all(bind=engine)
+        return
+
+    alembic_ini = os.path.join(os.path.dirname(__file__), "..", "alembic.ini")
+    if os.path.exists(alembic_ini):
+        from alembic.config import Config
+        from alembic import command
+
+        alembic_cfg = Config(alembic_ini)
+        command.upgrade(alembic_cfg, "head")
+    else:
+        Base.metadata.create_all(bind=engine)

@@ -4,7 +4,7 @@
 
 ---
 
-## v0.1.0 — Initial Release (c569f3d)
+## v0.1.0 — Initial Release (c569f3d, 2026-03-26)
 
 **실시간 BTC 변동성 예측 대시보드 MVP**
 
@@ -46,7 +46,7 @@
 
 ---
 
-## v0.2.0 — Binance WebSocket 실시간 가격 (dc2a086)
+## v0.2.0 — Binance WebSocket 실시간 가격 (dc2a086, 2026-03-26)
 
 **CoinGecko 폴링 → Binance WebSocket 스트리밍 전환**
 
@@ -65,7 +65,7 @@
 
 ---
 
-## v0.3.0 — Multi-coin 지원 (53e1f32)
+## v0.3.0 — Multi-coin 지원 (53e1f32, 2026-03-26)
 
 **BTC 단일 → BTC / ETH / SOL 3개 코인 지원 확장**
 
@@ -85,7 +85,7 @@
 
 ---
 
-## v0.4.0 — 예측 정확도 트래커 (28b974b)
+## v0.4.0 — 예측 정확도 트래커 (28b974b, 2026-03-26)
 
 **GARCH 모형별 예측 정확도를 시계열로 추적**
 
@@ -102,7 +102,7 @@
 
 ---
 
-## v0.5.0 — 포트폴리오 시뮬레이터 (784317f)
+## v0.5.0 — 포트폴리오 시뮬레이터 (784317f, 2026-03-26)
 
 **Monte Carlo 시뮬레이션 기반 멀티코인 포트폴리오 리스크 분석**
 
@@ -124,7 +124,7 @@
 
 ---
 
-## v0.5.1 — 심볼 필터 버그 수정 (b251ce8)
+## v0.5.1 — 심볼 필터 버그 수정 (b251ce8, 2026-03-26)
 
 **멀티코인 전환 시 데이터 혼재 버그 수정**
 
@@ -133,6 +133,47 @@
 - `routers/briefing.py`: AI 브리핑 쿼리에 코인별 필터 적용
 - `routers/backtest.py`: 백테스트 쿼리에 `symbol` 조건 추가
 - 코인 전환 시 이전 코인 데이터가 섞이는 문제 해결
+
+---
+
+## v0.5.2 — 포트 충돌 수정 (ab96eb1, 2026-03-28)
+
+**seoul-culture-map 프로젝트와의 포트 충돌 해소**
+
+- 개발 서버 포트를 기본값에서 변경하여 다른 프로젝트와 동시 실행 가능하도록 조정
+
+---
+
+## v0.6.0 — 멀티코인 완전 연동 + API 캐싱 (e8a2f3f, 2026-03-29)
+
+**모든 엔드포인트에 멀티코인 파라미터 적용 + 5분 TTL 인메모리 캐싱**
+
+### Backend
+- 전체 API 엔드포인트에 `coin` 쿼리 파라미터 일관 적용
+- 5분 TTL 인메모리 캐시 도입 (volatility, signal, leaderboard)
+- GARCH 재계산 방지로 응답 속도 개선
+
+### Frontend
+- README 스크린샷 및 데모 GIF 추가
+
+---
+
+## v0.7.0 — 테스트 + CI/CD (91a6ac3, 2026-03-29)
+
+**pytest 테스트 28개 + GitHub Actions CI 파이프라인 구축**
+
+### Backend
+- `tests/` 디렉토리 신규: pytest 기반 테스트 28개
+  - GARCH 서비스 단위 테스트
+  - Risk Score 산출 로직 테스트
+  - API 엔드포인트 통합 테스트 (TestClient)
+- `.env.example` 추가: 환경변수 템플릿
+
+### Infra
+- `.github/workflows/ci.yml`: GitHub Actions CI 구성
+  - `backend-test`: Python 3.11 + pytest 실행
+  - `frontend-lint`: Node 20 + ESLint 실행
+  - push/PR 시 자동 트리거
 
 ---
 

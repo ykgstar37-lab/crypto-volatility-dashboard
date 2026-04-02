@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import StatCard from '../components/StatCard';
 import PriceChart from '../components/PriceChart';
 import FngGauge from '../components/FngGauge';
 import FngChart from '../components/FngChart';
-import VolatilityChart from '../components/VolatilityChart';
 import RiskScore from '../components/RiskScore';
 import ModelTable from '../components/ModelTable';
 import LogReturnsChart from '../components/LogReturnsChart';
@@ -11,18 +10,21 @@ import Sidebar from '../components/Sidebar';
 import ApiLog from '../components/ApiLog';
 import SignalCard from '../components/SignalCard';
 import Leaderboard from '../components/Leaderboard';
-import BacktestPanel from '../components/BacktestPanel';
-import ModelExplainer from '../components/ModelExplainer';
-import AiMascot from '../components/AiMascot';
-import AccuracyTracker from '../components/AccuracyTracker';
-import PortfolioSimulator from '../components/PortfolioSimulator';
-import BottomDock from '../components/BottomDock';
 import PriceAlert from '../components/PriceAlert';
 import SignalAccuracy from '../components/SignalAccuracy';
 import ReportDownload from '../components/ReportDownload';
 import ToastContainer from '../components/Toast';
 import { SkeletonCard, SkeletonChart, SkeletonWide } from '../components/Skeleton';
-import { translations } from '../i18n';
+
+// Lazy-loaded heavy components (chart-intensive / large bundles)
+const VolatilityChart = lazy(() => import('../components/VolatilityChart'));
+const BacktestPanel = lazy(() => import('../components/BacktestPanel'));
+const ModelExplainer = lazy(() => import('../components/ModelExplainer'));
+const AiMascot = lazy(() => import('../components/AiMascot'));
+const AccuracyTracker = lazy(() => import('../components/AccuracyTracker'));
+const PortfolioSimulator = lazy(() => import('../components/PortfolioSimulator'));
+const BottomDock = lazy(() => import('../components/BottomDock'));
+import useApp from '../hooks/useApp';
 import { fetchCurrentPrice, fetchPriceHistory, fetchVolatilityPredict, fetchEthPrice } from '../api/client';
 import useRealtimePrice from '../hooks/useRealtimePrice';
 
@@ -38,9 +40,7 @@ const COINS = [
 ];
 
 export default function Dashboard() {
-    const [lang, setLang] = useState('ko');
-    const [dark, setDark] = useState(false);
-    const [coin, setCoin] = useState('BTC');
+    const { lang, setLang, dark, toggleDark, coin, setCoin, t } = useApp();
     const [price, setPrice] = useState(null);
     const [ethPrice, setEthPrice] = useState(null);
     const [history, setHistory] = useState([]);
@@ -50,9 +50,8 @@ export default function Dashboard() {
     const [logs, setLogs] = useState([]);
     const [activeSection, setActiveSection] = useState('dashboard');
     const [toasts, setToasts] = useState([]);
-    const [multiPrices, setMultiPrices] = useState({});
+    const [multiPrices] = useState({});
 
-    const t = translations[lang];
     const currentCoin = COINS.find(c => c.id === coin) || COINS[0];
 
     const addToast = (toast) => {
@@ -193,20 +192,20 @@ export default function Dashboard() {
                         <div className="w-7 h-7 rounded-lg bg-[#2b4fcb] flex items-center justify-center">
                             <span className="text-white text-xs font-bold">CV</span>
                         </div>
-                        <span className="text-base font-bold text-gray-900">CryptoVol</span>
+                        <span className={`text-base font-bold ${dark ? 'text-gray-100' : 'text-gray-900'}`}>CryptoVol</span>
                     </div>
-                    {/* Coin Selector */}
-                    <div className={`hidden lg:flex items-center rounded-lg p-0.5 border ${dark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
+                    {/* Coin Selector — visible on all screen sizes */}
+                    <div className={`flex items-center rounded-lg p-0.5 border ${dark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
                         {COINS.map(c => (
                             <button key={c.id} onClick={() => setCoin(c.id)}
-                                className={`flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold rounded-md transition ${
+                                className={`flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-md transition sm:gap-1.5 sm:px-3 ${
                                     coin === c.id
                                         ? `${dark ? 'bg-gray-700' : 'bg-white'} shadow-sm`
                                         : dark ? 'text-gray-500' : 'text-gray-400'
                                 }`}
                                 style={coin === c.id ? { color: c.color } : {}}>
                                 <span className="text-sm">{c.icon}</span>
-                                {c.id}
+                                <span className="hidden sm:inline">{c.id}</span>
                             </button>
                         ))}
                     </div>
@@ -223,7 +222,7 @@ export default function Dashboard() {
                             </button>
                         </div>
                         {/* Dark mode toggle */}
-                        <button onClick={() => setDark(!dark)}
+                        <button onClick={toggleDark}
                             className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${dark ? 'bg-gray-700 text-yellow-300' : 'bg-gray-100 text-gray-500'}`}>
                             {dark ? '☀️' : '🌙'}
                         </button>
@@ -300,7 +299,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Row 2.5: Accuracy + ETH + Alert + Report */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <SignalAccuracy coin={coin} t={t} />
                         <StatCard
                             label="Ethereum"
@@ -313,6 +312,8 @@ export default function Dashboard() {
                         <ReportDownload price={price} volatility={volatility} t={t} />
                     </div>
 
+                    {/* Lazy-loaded sections wrapped in Suspense */}
+                    <Suspense fallback={<SkeletonWide />}>
                     {/* Row 3: Volatility (full width) */}
                     <div id="models" className="mb-6">
                         <VolatilityChart coin={coin} t={t} />
@@ -346,6 +347,7 @@ export default function Dashboard() {
                     <div id="backtest" className="mb-6">
                         <BacktestPanel coin={coin} t={t} />
                     </div>
+                    </Suspense>
 
                     {/* Row 7: API Log */}
                     <div id="log" className="mb-6">
@@ -361,13 +363,17 @@ export default function Dashboard() {
             </main>
 
             {/* Bottom Dock - floating tools bar */}
-            <BottomDock dark={dark} ethPrice={liveEthPrice} price={{ ...price, price: liveCoinPrice }} volatility={volatility} t={t} addToast={addToast} />
+            <Suspense fallback={null}>
+                <BottomDock dark={dark} ethPrice={liveEthPrice} price={{ ...price, price: liveCoinPrice }} volatility={volatility} t={t} addToast={addToast} />
+            </Suspense>
 
             {/* Toast notifications */}
             <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
             {/* AI Mascot - floating bottom right */}
-            <AiMascot t={t} />
+            <Suspense fallback={null}>
+                <AiMascot t={t} />
+            </Suspense>
         </div>
     );
 }

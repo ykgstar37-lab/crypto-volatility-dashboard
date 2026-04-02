@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 # Use a separate test database file
 TEST_DB = "sqlite:///./data/test.db"
 os.environ["DATABASE_URL"] = TEST_DB
+os.environ["TESTING"] = "1"
 
 from app.database import Base, get_db
 from app.main import app

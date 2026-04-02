@@ -86,7 +86,7 @@ export default function AccuracyTracker({ coin = 'BTC', t = {} }) {
             </div>
 
             {/* Model ranking cards */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                 {data.models.map((m, idx) => (
                     <div key={m.model} className={`rounded-xl p-3 border ${idx === 0 ? 'border-[#2b4fcb]/30 bg-[#2b4fcb]/5' : 'border-gray-100 bg-gray-50'}`}>
                         <div className="flex items-center gap-2 mb-1.5">

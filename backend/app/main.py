@@ -23,8 +23,9 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database initialized")
 
-    # Backfill on first run
-    await backfill_data(days=365)
+    # Backfill in background (non-blocking startup)
+    backfill_task = asyncio.create_task(backfill_data(days=365))
+    logger.info("Backfill started in background")
 
     # Schedule daily fetch
     scheduler.add_job(
@@ -43,10 +44,9 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown Binance listener
-    binance_task.cancel()
-
     # Shutdown
+    backfill_task.cancel()
+    binance_task.cancel()
     scheduler.shutdown()
 
 

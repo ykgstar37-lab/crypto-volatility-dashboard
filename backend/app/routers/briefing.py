@@ -1,16 +1,21 @@
 import math
+from datetime import date
 
 import httpx
 import numpy as np
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
 from app.models.price import CoinDaily
+from app.services.rate_limit import briefing_limiter, get_client_ip
 
 router = APIRouter(prefix="/api/briefing", tags=["briefing"])
+
+# Daily cache: key = (date, lang) → response
+_briefing_cache: dict[tuple, dict] = {}
 
 
 def _build_market_context(db: Session) -> dict:
@@ -53,10 +58,17 @@ def _build_market_context(db: Session) -> dict:
 
 
 @router.get("")
-async def get_briefing(lang: str = Query(default="ko"), db: Session = Depends(get_db)):
-    """AI-powered daily BTC market briefing."""
+async def get_briefing(request: Request, lang: str = Query(default="ko"), db: Session = Depends(get_db)):
+    """AI-powered daily BTC market briefing (cached per day + language)."""
+    briefing_limiter.check(get_client_ip(request))
+
     if not settings.openai_api_key:
         return {"briefing": "OpenAI API key not configured.", "disclaimer": ""}
+
+    # Return cached briefing if already generated today
+    cache_key = (date.today(), lang)
+    if cache_key in _briefing_cache:
+        return _briefing_cache[cache_key]
 
     ctx = _build_market_context(db)
     if not ctx:
@@ -129,8 +141,14 @@ Please provide today's BTC market briefing based on the data above."""
     except Exception as e:
         briefing = f"AI briefing unavailable: {str(e)}"
 
-    return {
+    result = {
         "briefing": briefing,
         "disclaimer": disclaimer,
         "context": ctx,
     }
+
+    # Cache successful briefings for the rest of the day
+    if "unavailable" not in briefing:
+        _briefing_cache[cache_key] = result
+
+    return result

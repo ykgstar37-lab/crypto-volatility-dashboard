@@ -9,3 +9,5 @@ numpy
 pandas
 scipy
 websockets
+alembic
+psycopg2-binary
